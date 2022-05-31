@@ -1,0 +1,80 @@
+<?php
+$query = "SELECT qu.*, (SELECT LEFT(body,400) FROM `answers` WHERE `answers`.`question_id`=qu.question_id LIMIT 1) AS excerpt FROM (SELECT qu1.views, qu1.question_id,qu1.title, qu1.active_q FROM questions qu1 LEFT JOIN `answers` an1 ON qu1.question_id=an1.question_id WHERE (LENGTH(an1.`body`) > 5) AND (qu1.active_q = 1) ORDER BY rand() LIMIT 10) qu WHERE `active_q` = 1 ORDER BY qu.views DESC;";
+                      
+$stmt = $db->prepare($query);
+
+$stmt->execute();
+
+$num = $stmt->rowCount();
+
+if ($num > 0) {
+    $answersArr["records"] = array();
+
+    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        extract($row);
+        
+        $title = html_entity_decode($title, ENT_QUOTES);
+        $title = html_entity_decode($title);
+        $title = html_entity_decode($title);
+        $title = html_entity_decode($title);
+        $title = html_entity_decode($title);
+        $title = html_entity_decode($title);
+        $title = htmlspecialchars_decode($title);
+        
+        $excerpt = html_entity_decode($excerpt, ENT_QUOTES);
+        $excerpt = html_entity_decode($excerpt);
+        $excerpt = html_entity_decode($excerpt);
+        $excerpt = html_entity_decode($excerpt);
+        $excerpt = html_entity_decode($excerpt);
+        $excerpt = html_entity_decode($excerpt);
+        
+        $excerpt = str_replace('? ', '?<br />', $excerpt);
+        $excerpt = str_replace('! ', '?<br />', $excerpt);
+        
+        $urlFTitle = strtolower(preg_replace('/[^a-zA-Z0-9]/', '-', html_entity_decode($title, ENT_QUOTES)));
+
+        while (strpos($urlFTitle, '--') !== false) {
+            $urlFTitle = strtolower(preg_replace('/--/', '-', $urlFTitle));
+        }
+
+        $urlFTitle = mb_substr($urlFTitle, 0, 80);
+
+        if (mb_substr($urlFTitle, -1) == '-') {
+            $urlFTitle = mb_substr($urlFTitle, 0, -1);
+        }
+        
+        $answerItem = array(
+            "question_id" => $question_id,
+            "title" => html_entity_decode($title, ENT_QUOTES),
+            "views" => $views,
+            "url_f_title" => $urlFTitle,
+            "excerpt" => $excerpt = html_entity_decode($excerpt, ENT_QUOTES) . "...",
+        );
+
+        array_push($answersArr["records"], $answerItem);
+    }
+}
+?>
+
+<div id="random-bottom-questions" class="module tex2jax_ignore">
+    <h4 class="py-5">
+    Other questions
+    </h4>
+    <ul>
+    <?php foreach ($answersArr["records"] as $item) { ?>
+        <li class="spacer js-gps-track">
+            <div class="hot-questions">
+            <div>
+                <div class="bottom-random-views"><a href="/q/<?php echo $item['question_id'] ?>/<?php echo $item['url_f_title'] ?>" title="<?php echo $item['title'] ?>">
+                    <div class="answer-votes answered-accepted extra-large"><?php echo $item['views'] ?></div>
+                </a></div>
+                <div class="bottom-random-title"><a href="/q/<?php echo $item['question_id'] ?>/<?php echo $item['url_f_title'] ?>" class="js-gps-track question-hyperlink mb0"><?php echo $item['title'] ?></a></div>
+                </div>
+                <div class="bottom-excerpt py-3">
+                    <p><?php echo $item['excerpt'] ?></p>
+                </div>
+            </div>
+        </li>
+    <?php } ?>
+    </ul>
+</div>
